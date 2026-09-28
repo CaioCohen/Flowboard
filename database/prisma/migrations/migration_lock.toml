@@ -1,0 +1,3 @@
+# This file is created by Prisma and prevents migrations from being applied
+# with a different database provider.
+provider = "postgresql"

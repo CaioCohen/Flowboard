@@ -1,0 +1,1 @@
+using the playwright MCP. Open the browser in http://localhost:5173/ and test the flow of the app. With log in, CRUD

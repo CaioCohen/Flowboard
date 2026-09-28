@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+node_modules/
+apps/**/node_modules/
+dist/
+coverage/
+database/generated/
+playwright-report/
+test-results/

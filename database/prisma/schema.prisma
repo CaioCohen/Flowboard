@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WorkspaceRole {
+  ADMIN
+  EMPLOYEE
+}
+
+enum NotificationType {
+  WORKSPACE_ADDED
+  WORKSPACE_REMOVED
+  WORKSPACE_ROLE_CHANGED
+}
+
+enum TicketStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id                 String            @id @default(uuid()) @db.Uuid
+  firstName          String            @db.VarChar(100)
+  lastName           String            @db.VarChar(100)
+  email              String            @unique @db.VarChar(320)
+  passwordHash       String            @db.VarChar(255)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  workspaceMembers   WorkspaceMember[]
+  notifications      Notification[]    @relation("NotificationRecipient")
+  actorNotifications Notification[]    @relation("NotificationActor")
+  assignedTickets    Ticket[]          @relation("TicketAssignee")
+  createdTickets     Ticket[]          @relation("TicketCreator")
+}
+
+model Workspace {
+  id            String            @id @default(uuid()) @db.Uuid
+  name          String            @db.VarChar(255)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  members       WorkspaceMember[]
+  notifications Notification[]
+  tickets       Ticket[]
+}
+
+model WorkspaceMember {
+  id          String        @id @default(uuid()) @db.Uuid
+  workspaceId String        @db.Uuid
+  userId      String        @db.Uuid
+  role        WorkspaceRole
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+}
+
+model Notification {
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String           @db.Uuid
+  workspaceId String?          @db.Uuid
+  actorUserId String?          @db.Uuid
+  type        NotificationType
+  title       String           @db.VarChar(255)
+  message     String           @db.Text
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  user        User             @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace?       @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  actorUser   User?            @relation("NotificationActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([workspaceId])
+  @@index([actorUserId])
+}
+
+model Ticket {
+  id          String          @id @default(uuid()) @db.Uuid
+  workspaceId String          @db.Uuid
+  title       String          @db.VarChar(255)
+  description String?         @db.Text
+  status      TicketStatus
+  priority    TicketPriority?
+  assigneeId  String?         @db.Uuid
+  createdById String          @db.Uuid
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignee    User?           @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy   User            @relation("TicketCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([workspaceId, updatedAt])
+  @@index([assigneeId])
+  @@index([createdById])
+}

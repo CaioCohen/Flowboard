@@ -1,0 +1,33 @@
+{
+  "name": "flowboard",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@12.6.0",
+  "scripts": {
+    "dev:api": "pnpm --filter @flowboard/api start:dev",
+    "dev:web": "pnpm --filter @flowboard/web dev",
+    "build": "pnpm -r --if-present run build",
+    "lint": "eslint apps --ext .ts,.tsx",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "pnpm -r --if-present run test",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm prisma:validate",
+    "db:up": "docker compose up -d postgres postgres-test",
+    "db:down": "docker compose down",
+    "db:status": "docker compose ps",
+    "db:logs": "docker compose logs --tail=100 postgres postgres-test",
+    "prisma:validate": "prisma validate --schema database/prisma/schema.prisma",
+    "prisma:generate": "prisma generate --schema database/prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema database/prisma/schema.prisma",
+    "prisma:deploy": "prisma migrate deploy --schema database/prisma/schema.prisma"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "globals": "^16.0.0",
+    "prisma": "^6.0.0",
+    "typescript-eslint": "^8.0.0"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3"
+  }
+}
