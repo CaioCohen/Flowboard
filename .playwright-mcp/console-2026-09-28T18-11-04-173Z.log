@@ -1,3 +1,11 @@
 [ 4090119ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=b71cbea2:22162
 [ 4946768ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5173/@vite/client:864
 [ 4969688ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=b71cbea2:22162
+[ 5638684ms] [ERROR] [vite] SyntaxError: The requested module '/src/modules/account/index.ts' does not provide an export named 'getInitials' @ http://localhost:5173/@vite/client:808
+[ 5638696ms] [ERROR] [vite] Failed to reload /src/routes/app-routes.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 5720472ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/modules/workspace/pages/workspaces/workspaces.styles.ts?t=1790624784627:0
+[ 5720472ms] [ERROR] [vite] Failed to reload /src/modules/workspace/pages/workspaces/workspaces.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 6009443ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/src/modules/workspace/pages/workspace-dashboard/workspace-dashboard.tsx?t=1790625073608:0
+[ 6009443ms] [ERROR] [vite] Failed to reload /src/modules/workspace/pages/workspace-dashboard/workspace-dashboard.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808
+[ 6062733ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/modules/workspace/pages/workspace-dashboard/workspace-dashboard.styles.ts?t=1790625126883:0
+[ 6062734ms] [ERROR] [vite] Failed to reload /src/modules/workspace/pages/workspace-dashboard/workspace-dashboard.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:808

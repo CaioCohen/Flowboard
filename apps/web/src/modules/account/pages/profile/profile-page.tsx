@@ -57,30 +57,20 @@ export function ProfilePage({ token = readSessionToken(), onUnauthorized }: IPro
   if (hasError) {
     return (
       <main className="profile-page" role="alert">
-        <h1>Profile</h1>
-        <p>We could not load your profile. Please try again.</p>
-        <button type="button" onClick={() => setRetryKey((value) => value + 1)}>Retry</button>
+        <p className="profile-page__eyebrow">Account</p><h1>Profile</h1>
+        <section className="profile-message"><h2>We could not load your profile</h2><p>Please try again.</p><button type="button" onClick={() => setRetryKey((value) => value + 1)}>Retry</button></section>
       </main>
     );
   }
 
   if (!user) {
-    return <main className="profile-page"><h1>Profile unavailable</h1><p>Your identity information is not available right now.</p></main>;
+    return <main className="profile-page"><p className="profile-page__eyebrow">Account</p><h1>Profile unavailable</h1><section className="profile-message"><p>Your identity information is not available right now.</p></section></main>;
   }
 
   return (
     <main className="profile-page">
-      <h1>Profile</h1>
-      <section className="profile-card" aria-label="Your identity">
-        <div className="profile-avatar" aria-label={`Avatar initials ${getInitials(user.firstName, user.lastName, user.email)}`}>
-          {getInitials(user.firstName, user.lastName, user.email)}
-        </div>
-        <dl className="profile-details">
-          <div><dt>First name</dt><dd>{user.firstName}</dd></div>
-          <div><dt>Last name</dt><dd>{user.lastName}</dd></div>
-          <div><dt>Email</dt><dd>{user.email}</dd></div>
-        </dl>
-      </section>
+      <p className="profile-page__eyebrow">Account</p><h1>Profile</h1><p className="profile-page__subtitle">Your personal information and account identity.</p>
+      <section className="profile-card" aria-label="Your identity"><div className="profile-card__identity"><div className="profile-avatar" aria-label={`Avatar initials ${getInitials(user.firstName, user.lastName, user.email)}`}>{getInitials(user.firstName, user.lastName, user.email)}</div><div><h2>{user.firstName} {user.lastName}</h2><p>{user.email}</p></div></div><dl className="profile-details"><div><dt>First name</dt><dd>{user.firstName}</dd></div><div><dt>Last name</dt><dd>{user.lastName}</dd></div><div className="profile-details__full"><dt>Email address</dt><dd>{user.email}</dd></div></dl></section>
     </main>
   );
 }

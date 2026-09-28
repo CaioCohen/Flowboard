@@ -28,16 +28,15 @@ export function WorkspacesPage({ accessToken, onOpenWorkspace }: IWorkspacesPage
   }
 
   return <section className={workspacePageClassNames.page} aria-labelledby="workspaces-heading">
-    <header><h1 id="workspaces-heading">My Workspaces</h1><button onClick={() => setCreating(true)}>Create Workspace</button></header>
+    <header className="workspace-page__header"><div><p className="workspace-page__eyebrow">Workspace directory</p><h1 id="workspaces-heading">My Workspaces</h1><p className="workspace-page__subtitle">Organize your team’s work in one focused place.</p></div><button className="workspace-primary-action" onClick={() => setCreating(true)}>Create workspace</button></header>
     {error && <p className={workspacePageClassNames.error} role="alert">{error}</p>}
     {!workspaces && !error && <p aria-live="polite">Loading workspaces…</p>}
     {workspaces?.length === 0 && <p>You do not belong to a workspace yet. Create your first workspace to get started.</p>}
     <div className="workspace-grid">
       {workspaces?.map((workspace) => <article key={workspace.id} className={workspacePageClassNames.card}>
-        <h2>{workspace.name}</h2><p>Your role: {workspace.role ?? "MEMBER"}</p>
-        <button onClick={() => onOpenWorkspace(workspace.id)}>Open workspace</button>
-        {workspace.role === "ADMIN" && <button onClick={() => setEditing(workspace)}>Edit</button>}
-        <button onClick={() => void leave(workspace)}>Leave</button>
+        <div className="workspace-card__heading"><span className="workspace-card__mark" aria-hidden="true">{workspace.name.trim().charAt(0).toUpperCase()}</span><span className="workspace-role">{workspace.role === "ADMIN" ? "Admin" : "Member"}</span></div>
+        <h2>{workspace.name}</h2><p>Manage tickets, teammates, and the work that moves your team forward.</p>
+        <div className="workspace-card__actions"><button className="workspace-primary-action" onClick={() => onOpenWorkspace(workspace.id)}>Open workspace</button>{workspace.role === "ADMIN" && <button className="workspace-secondary-action" onClick={() => setEditing(workspace)}>Manage</button>}<button className="workspace-leave-action" onClick={() => void leave(workspace)}>Leave</button></div>
       </article>)}
     </div>
     {creating && <WorkspaceForm title="Create workspace" submitLabel="Create Workspace" onClose={() => setCreating(false)} onSubmit={async (name) => { await workspaceApi.create(accessToken, name); await load(); setCreating(false); }} />}
