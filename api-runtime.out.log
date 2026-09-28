@@ -1,8 +1,0 @@
-[Nest] 28432  - 28/09/2026, 12:59:53     LOG [NestFactory] Starting Nest application...
-[Nest] 28432  - 28/09/2026, 12:59:53     LOG [InstanceLoader] AppModule dependencies initialized +61ms
-[Nest] 28432  - 28/09/2026, 12:59:53     LOG [InstanceLoader] RuntimeConfigModule dependencies initialized +2ms
-[Nest] 28432  - 28/09/2026, 12:59:53     LOG [InstanceLoader] DatabaseModule dependencies initialized +4ms
-[Nest] 28432  - 28/09/2026, 12:59:53     LOG [InstanceLoader] HealthModule dependencies initialized +2ms
-[Nest] 28432  - 28/09/2026, 13:00:00     LOG [RoutesResolver] HealthController {/health}: +6609ms
-[Nest] 28432  - 28/09/2026, 13:00:00     LOG [RouterExplorer] Mapped {/health, GET} route +59ms
-[Nest] 28432  - 28/09/2026, 13:00:00     LOG [NestApplication] Nest application successfully started +3ms
