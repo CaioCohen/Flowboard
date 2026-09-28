@@ -1,0 +1,7 @@
+.app-shell { min-height: 100vh; background: #111827; color: #f9fafb; }
+.app-navbar { align-items: center; background: #1f2937; display: flex; justify-content: space-between; padding: 1rem 2rem; }
+.app-navbar a { color: #f9fafb; font-weight: 700; text-decoration: none; }
+.app-navbar a:focus-visible, .app-navbar button:focus-visible { outline: 3px solid #60a5fa; outline-offset: 3px; }
+.app-navbar__actions { align-items: center; display: flex; gap: 1rem; }
+.app-navbar button { background: transparent; border: 1px solid #9ca3af; border-radius: .25rem; color: #f9fafb; cursor: pointer; padding: .4rem .7rem; }
+@media (max-width: 600px) { .app-navbar { align-items: flex-start; flex-direction: column; gap: .75rem; padding: 1rem; } .app-navbar__actions { flex-wrap: wrap; } }

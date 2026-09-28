@@ -1,0 +1,11 @@
+.notifications-page { max-width: 52rem; margin: 0 auto; padding: 2rem; color: #f9fafb; }
+.notification-list { display: grid; gap: 1rem; padding: 0; list-style: none; }
+.notification-item { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem; border: 1px solid #374151; border-radius: .75rem; background: #1f2937; }
+.notification-item--unread { border-left: .35rem solid #60a5fa; }
+.notification-content { min-width: 0; }
+.notification-content h2, .notification-content p { margin: 0 0 .5rem; }
+.notification-status, .notification-meta { color: #cbd5e1; font-size: .875rem; }
+.notification-error { color: #fca5a5; }
+.notifications-page button { border: 0; border-radius: .375rem; padding: .5rem .75rem; align-self: start; background: #2563eb; color: #fff; font: inherit; cursor: pointer; }
+.notifications-page button:disabled { cursor: wait; opacity: .65; }
+.notifications-page button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }

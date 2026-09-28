@@ -1,0 +1,7 @@
+.profile-page { max-width: 48rem; margin: 0 auto; padding: 2rem; color: #f9fafb; }
+.profile-card { display: flex; gap: 1.5rem; align-items: center; padding: 1.5rem; border: 1px solid #374151; border-radius: .75rem; background: #1f2937; }
+.profile-avatar { display: grid; place-items: center; width: 4rem; height: 4rem; border-radius: 999px; background: #2563eb; font-size: 1.25rem; font-weight: 700; }
+.profile-details { display: grid; gap: .75rem; margin: 0; }
+.profile-details div { display: grid; gap: .2rem; }
+.profile-details dt { color: #9ca3af; font-size: .875rem; }
+.profile-details dd { margin: 0; }
