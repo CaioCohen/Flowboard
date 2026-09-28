@@ -11,6 +11,11 @@ function navigate(path: string): void {
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
+function Redirect({ to }: { to: string }) {
+  useEffect(() => { window.history.replaceState(null, "", to); window.dispatchEvent(new PopStateEvent("popstate")); }, [to]);
+  return null;
+}
+
 function AppLayout({ children, onLogout }: { children: React.ReactNode; onLogout: () => void }) {
   const user = getAuthenticatedUser();
   const displayName = getProfileDisplayName(user);
@@ -49,13 +54,12 @@ export function AppRoutes() {
   const workspaceMatch = path.match(/^\/workspace\/([^/]+)$/);
 
   if (!authenticated) {
-    if (path !== "/login" && path !== "/register") navigate("/login");
+    if (path !== "/login" && path !== "/register") return <Redirect to="/login" />;
     return path === "/register" ? <RegisterPage /> : <LoginPage />;
   }
 
   if (path === "/login" || path === "/register" || path === "/") {
-    navigate("/workspaces");
-    return <WorkspacesPage accessToken={token!} onOpenWorkspace={(id) => navigate(`/workspace/${id}`)} />;
+    return <Redirect to="/workspaces" />;
   }
 
   const content = path === "/profile"

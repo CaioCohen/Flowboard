@@ -23,6 +23,12 @@ export function validateEnvironment(environment: Environment): RuntimeConfigurat
 
   validateUrl(environment.DATABASE_URL!, ['postgres:', 'postgresql:'], 'DATABASE_URL');
   validateUrl(environment.FRONTEND_URL!, ['http:', 'https:'], 'FRONTEND_URL');
+  if (Buffer.byteLength(environment.JWT_SECRET!, 'utf8') < 32) {
+    throw new Error('Invalid runtime configuration: JWT_SECRET must be at least 32 bytes');
+  }
+  if (!isPositiveDuration(environment.JWT_EXPIRATION!)) {
+    throw new Error('Invalid runtime configuration: JWT_EXPIRATION must be a positive duration using s, m, h, or d');
+  }
 
   return {
     databaseUrl: environment.DATABASE_URL!,
@@ -31,6 +37,11 @@ export function validateEnvironment(environment: Environment): RuntimeConfigurat
     port,
     frontendUrl: environment.FRONTEND_URL!,
   };
+}
+
+function isPositiveDuration(value: string): boolean {
+  const match = /^(\d+)\s*([smhd])$/.exec(value.trim());
+  return match !== null && Number(match[1]) > 0;
 }
 
 function validateUrl(value: string, protocols: string[], key: string): void {

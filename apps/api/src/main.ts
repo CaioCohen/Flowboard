@@ -10,6 +10,7 @@ import { RuntimeConfigService } from './config/runtime-config.service';
 async function bootstrap(): Promise<void> {
   loadEnvironmentFile();
   const app = await NestFactory.create(AppModule, { bufferLogs: false });
+  app.enableShutdownHooks();
   const config = app.get(RuntimeConfigService);
 
   app.enableCors({ origin: config.frontendUrl, credentials: true });

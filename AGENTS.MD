@@ -23,3 +23,16 @@ Before considering any task complete:
 Do not consider a coding, configuration, architecture, database, documentation, testing, refactoring, or infrastructure task complete until its AI history has been recorded.
 
 Never include secrets, passwords, tokens, `.env` values, private keys, or other sensitive information in AI history.
+
+## Task Completion
+
+When implementing a requested change:
+
+- Do not stop after describing what you are about to do.
+- Continue working until the requested implementation is complete.
+- Run the relevant tests or validation after making changes.
+- Fix issues found during validation when possible.
+- Only return control to the user when:
+  - the task is complete, or
+  - there is a concrete blocker requiring user input.
+- Progress updates are not task completion.

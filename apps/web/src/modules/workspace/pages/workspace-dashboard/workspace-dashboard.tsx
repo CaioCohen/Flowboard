@@ -6,12 +6,13 @@ import { formatWorkspaceLabel } from "../../utils/workspace-presentation";
 import { TICKET_PRIORITIES, TICKET_STATUSES } from "../../utils/workspace-validation";
 import { workspaceDashboardClassNames } from "./workspace-dashboard.styles";
 
-interface IWorkspaceDashboardPageProps { accessToken: string; workspaceId: string; onBack: () => void; canManageTickets?: boolean }
+interface IWorkspaceDashboardPageProps { accessToken: string; workspaceId: string; onBack: () => void }
 const emptyDraft: ITicketDraft = { title: "", status: "BACKLOG" };
 const errorText = (error: unknown) => error instanceof Error ? error.message : "Something went wrong. Please try again.";
 
-export function WorkspaceDashboardPage({ accessToken, workspaceId, onBack, canManageTickets = true }: IWorkspaceDashboardPageProps) {
+export function WorkspaceDashboardPage({ accessToken, workspaceId, onBack }: IWorkspaceDashboardPageProps) {
   const [workspace, setWorkspace] = useState<IWorkspace>(); const [tickets, setTickets] = useState<ITicket[]>(); const [error, setError] = useState<string>(); const [draft, setDraft] = useState<ITicket | ITicketDraft>();
+  const canManageTickets = workspace?.role === "ADMIN";
   const load = useCallback(async () => { setError(undefined); try { const [currentWorkspace, currentTickets] = await Promise.all([workspaceApi.get(accessToken, workspaceId), workspaceApi.tickets(accessToken, workspaceId)]); setWorkspace(currentWorkspace); setTickets(currentTickets); } catch (cause) { setError(errorText(cause)); } }, [accessToken, workspaceId]);
   useEffect(() => { void load(); }, [load]);
   async function deleteTicket(ticket: ITicket) { if (!window.confirm(`Are you sure you want to delete “${ticket.title}”?`)) return; try { await workspaceApi.deleteTicket(accessToken, ticket.id); await load(); } catch (cause) { setError(errorText(cause)); } }

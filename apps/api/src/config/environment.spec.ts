@@ -3,7 +3,7 @@ import { validateEnvironment } from './environment';
 describe('validateEnvironment', () => {
   const validEnvironment = {
     DATABASE_URL: 'postgresql://flowboard:local@localhost:5432/flowboard',
-    JWT_SECRET: 'local-development-secret',
+    JWT_SECRET: 'local-development-secret-at-least-32-bytes-long',
     JWT_EXPIRATION: '15m',
     PORT: '3000',
     FRONTEND_URL: 'http://localhost:5173',
@@ -12,7 +12,7 @@ describe('validateEnvironment', () => {
   it('returns a normalized runtime configuration for a valid environment', () => {
     expect(validateEnvironment(validEnvironment)).toEqual({
       databaseUrl: 'postgresql://flowboard:local@localhost:5432/flowboard',
-      jwtSecret: 'local-development-secret',
+      jwtSecret: 'local-development-secret-at-least-32-bytes-long',
       jwtExpiration: '15m',
       port: 3000,
       frontendUrl: 'http://localhost:5173',
@@ -28,6 +28,21 @@ describe('validateEnvironment', () => {
   it('rejects a non-numeric port', () => {
     expect(() => validateEnvironment({ ...validEnvironment, PORT: 'api' })).toThrow(
       'Invalid runtime configuration: PORT must be a valid TCP port',
+    );
+  });
+
+  it('rejects JWT secrets shorter than 32 bytes', () => {
+    expect(() => validateEnvironment({ ...validEnvironment, JWT_SECRET: 'too-short' })).toThrow(
+      'Invalid runtime configuration: JWT_SECRET must be at least 32 bytes',
+    );
+  });
+
+  it('rejects malformed or zero JWT expirations', () => {
+    expect(() => validateEnvironment({ ...validEnvironment, JWT_EXPIRATION: 'tomorrow' })).toThrow(
+      'Invalid runtime configuration: JWT_EXPIRATION must be a positive duration using s, m, h, or d',
+    );
+    expect(() => validateEnvironment({ ...validEnvironment, JWT_EXPIRATION: '0s' })).toThrow(
+      'Invalid runtime configuration: JWT_EXPIRATION must be a positive duration using s, m, h, or d',
     );
   });
 });
