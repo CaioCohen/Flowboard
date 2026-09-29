@@ -56,8 +56,9 @@ export class WorkspaceRepository {
     return result.rows;
   }
 
-  async findMember(workspaceId: string, userId: string): Promise<{ userId: string; role: WorkspaceRole } | null> {
-    return this.findMembership(workspaceId, userId);
+  async findMember(workspaceId: string, userId: string, executor: DatabaseExecutor = this.database): Promise<{ userId: string; role: WorkspaceRole } | null> {
+    const result = await executor.query<{ userId: string; role: WorkspaceRole }>('SELECT "userId" AS "userId", role FROM "WorkspaceMember" WHERE "workspaceId" = $1 AND "userId" = $2', [workspaceId, userId]);
+    return result.rows[0] ?? null;
   }
 
   async findUserByEmail(email: string): Promise<{ id: string } | null> {
@@ -76,12 +77,16 @@ export class WorkspaceRepository {
   }
 
   async updateMemberRole(workspaceId: string, userId: string, role: WorkspaceRole, executor: DatabaseExecutor = this.database): Promise<IWorkspaceMember> {
-    await executor.query('UPDATE "WorkspaceMember" SET role = $3, "updatedAt" = NOW() WHERE "workspaceId" = $1 AND "userId" = $2', [workspaceId, userId, role]);
-    return (await this.listMembers(workspaceId)).find((member) => member.userId === userId)!;
+    const result = await executor.query<IWorkspaceMember>('WITH member AS (UPDATE "WorkspaceMember" SET role = $3, "updatedAt" = NOW() WHERE "workspaceId" = $1 AND "userId" = $2 RETURNING id, "userId", role) SELECT member.id, member."userId" AS "userId", member.role, u.email, CONCAT(u."firstName", \' \', u."lastName") AS name FROM member JOIN "User" u ON u.id = member."userId"', [workspaceId, userId, role]);
+    return result.rows[0];
   }
 
-  async countAdmins(workspaceId: string): Promise<number> {
-    const result = await this.database.query<{ count: string }>('SELECT COUNT(*)::text AS count FROM "WorkspaceMember" WHERE "workspaceId" = $1 AND role = $2', [workspaceId, WorkspaceRole.ADMIN]);
+  async lockMembers(workspaceId: string, executor: DatabaseExecutor = this.database): Promise<void> {
+    await executor.query('SELECT id FROM "WorkspaceMember" WHERE "workspaceId" = $1 FOR UPDATE', [workspaceId]);
+  }
+
+  async countAdmins(workspaceId: string, executor: DatabaseExecutor = this.database): Promise<number> {
+    const result = await executor.query<{ count: string }>('SELECT COUNT(*)::text AS count FROM "WorkspaceMember" WHERE "workspaceId" = $1 AND role = $2', [workspaceId, WorkspaceRole.ADMIN]);
     return Number(result.rows[0].count);
   }
 

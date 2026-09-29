@@ -36,20 +36,27 @@ export class WorkspaceService {
     if (!user) throw new NotFoundException('User not found.');
     if (await this.workspaces.findMember(workspaceId, user.id)) throw new ConflictException('User is already a workspace member.');
     const workspace = await this.workspaceOrThrow(workspaceId);
-    return this.database.transaction(async (transaction) => {
-      const member = await this.workspaces.addMember(workspaceId, user.id, dto.role, transaction);
-      await this.notifications.create({ userId: user.id, workspaceId, actorUserId: actor.id, type: 'WORKSPACE_ADDED', title: 'You were added to a workspace', message: `You were added to ${workspace.name}.` }, transaction);
-      return member;
-    });
+    try {
+      return await this.database.transaction(async (transaction) => {
+        const member = await this.workspaces.addMember(workspaceId, user.id, dto.role, transaction);
+        await this.notifications.create({ userId: user.id, workspaceId, actorUserId: actor.id, type: 'WORKSPACE_ADDED', title: 'You were added to a workspace', message: `You were added to ${workspace.name}.` }, transaction);
+        return member;
+      });
+    } catch (error: unknown) {
+      if (this.isUniqueViolation(error)) throw new ConflictException('User is already a workspace member.');
+      throw error;
+    }
   }
 
   async changeMemberRole(actor: IAuthenticatedUser, workspaceId: string, userId: string, dto: UpdateMemberRoleDto): Promise<IWorkspaceMember> {
     await this.requireAdmin(actor.id, workspaceId);
     const member = await this.requireTargetMember(workspaceId, userId);
-    await this.assertNotRemovingLastAdmin(workspaceId, member.role, dto.role);
     if (member.role === dto.role) return this.workspaces.updateMemberRole(workspaceId, userId, dto.role);
     const workspace = await this.workspaceOrThrow(workspaceId);
     return this.database.transaction(async (transaction) => {
+      await this.workspaces.lockMembers(workspaceId, transaction);
+      const currentMember = await this.requireTargetMember(workspaceId, userId, transaction);
+      await this.assertNotRemovingLastAdmin(workspaceId, currentMember.role, dto.role, transaction);
       const updated = await this.workspaces.updateMemberRole(workspaceId, userId, dto.role, transaction);
       await this.notifications.create({ userId, workspaceId, actorUserId: actor.id, type: 'WORKSPACE_ROLE_CHANGED', title: 'Your workspace role changed', message: `Your role in ${workspace.name} was changed to ${dto.role}.` }, transaction);
       return updated;
@@ -58,14 +65,12 @@ export class WorkspaceService {
 
   async removeMember(actor: IAuthenticatedUser, workspaceId: string, userId: string): Promise<void> {
     await this.requireAdmin(actor.id, workspaceId);
-    const member = await this.requireTargetMember(workspaceId, userId);
-    await this.assertNotRemovingLastAdmin(workspaceId, member.role);
+    await this.requireTargetMember(workspaceId, userId);
     await this.removeWithNotification(actor.id, workspaceId, userId);
   }
 
   async leave(actor: IAuthenticatedUser, workspaceId: string): Promise<void> {
-    const member = await this.requireMember(actor.id, workspaceId);
-    await this.assertNotRemovingLastAdmin(workspaceId, member.role);
+    await this.requireMember(actor.id, workspaceId);
     await this.removeWithNotification(actor.id, workspaceId, actor.id);
   }
 
@@ -85,6 +90,9 @@ export class WorkspaceService {
   private async removeWithNotification(actorUserId: string, workspaceId: string, userId: string): Promise<void> {
     const workspace = await this.workspaceOrThrow(workspaceId);
     await this.database.transaction(async (transaction) => {
+      await this.workspaces.lockMembers(workspaceId, transaction);
+      const member = await this.requireTargetMember(workspaceId, userId, transaction);
+      await this.assertNotRemovingLastAdmin(workspaceId, member.role, undefined, transaction);
       await this.workspaces.removeMember(workspaceId, userId, transaction);
       await this.notifications.create({ userId, workspaceId, actorUserId, type: 'WORKSPACE_REMOVED', title: 'You were removed from a workspace', message: `You were removed from ${workspace.name}.` }, transaction);
     });
@@ -95,15 +103,19 @@ export class WorkspaceService {
     if (member.role !== WorkspaceRole.ADMIN) throw new ForbiddenException();
   }
 
-  private async requireTargetMember(workspaceId: string, userId: string): Promise<{ userId: string; role: WorkspaceRole }> {
-    const member = await this.workspaces.findMember(workspaceId, userId);
+  private async requireTargetMember(workspaceId: string, userId: string, executor?: Parameters<WorkspaceRepository['findMember']>[2]): Promise<{ userId: string; role: WorkspaceRole }> {
+    const member = await this.workspaces.findMember(workspaceId, userId, executor);
     if (!member) throw new NotFoundException('Workspace member not found.');
     return member;
   }
 
-  private async assertNotRemovingLastAdmin(workspaceId: string, currentRole: WorkspaceRole, nextRole?: WorkspaceRole): Promise<void> {
-    if (currentRole === WorkspaceRole.ADMIN && nextRole !== WorkspaceRole.ADMIN && await this.workspaces.countAdmins(workspaceId) === 1) {
+  private async assertNotRemovingLastAdmin(workspaceId: string, currentRole: WorkspaceRole, nextRole?: WorkspaceRole, executor?: Parameters<WorkspaceRepository['countAdmins']>[1]): Promise<void> {
+    if (currentRole === WorkspaceRole.ADMIN && nextRole !== WorkspaceRole.ADMIN && await this.workspaces.countAdmins(workspaceId, executor) === 1) {
       throw new ConflictException(LAST_ADMINISTRATOR_MESSAGE);
     }
+  }
+
+  private isUniqueViolation(error: unknown): boolean {
+    return typeof error === 'object' && error !== null && 'code' in error && error.code === '23505';
   }
 }

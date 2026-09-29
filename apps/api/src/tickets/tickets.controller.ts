@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Req } from '@nestjs/common';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { TicketsService } from './tickets.service';
@@ -29,5 +29,11 @@ export class TicketsController {
   @Patch('tickets/:id')
   update(@Param('id', new ParseUUIDPipe()) ticketId: string, @Req() request: AuthenticatedRequest, @Body() dto: UpdateTicketDto) {
     return this.tickets.update(ticketId, request.user.id, dto);
+  }
+
+  @Delete('tickets/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id', new ParseUUIDPipe()) ticketId: string, @Req() request: AuthenticatedRequest): Promise<void> {
+    await this.tickets.remove(ticketId, request.user.id);
   }
 }

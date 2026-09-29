@@ -21,10 +21,12 @@ export interface TicketRepositoryPort {
   findById(id: string): Promise<TicketRecord | null>;
   create(input: Omit<TicketRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<TicketRecord>;
   update(id: string, input: Partial<Pick<TicketRecord, 'title' | 'description' | 'status' | 'priority' | 'assigneeId'>>): Promise<TicketRecord>;
+  remove(id: string): Promise<void>;
 }
 
 export interface WorkspaceMembershipPort {
   findMember(workspaceId: string, userId: string): Promise<{ userId: string; role: 'ADMIN' | 'EMPLOYEE' } | null>;
+  workspaceExists(workspaceId: string): Promise<boolean>;
 }
 
 export const TICKET_REPOSITORY = Symbol('TICKET_REPOSITORY');
@@ -64,6 +66,12 @@ export class TicketsService {
     return this.tickets.update(ticketId, input);
   }
 
+  async remove(ticketId: string, userId: string): Promise<void> {
+    const ticket = await this.requireTicket(ticketId);
+    await this.requireAdmin(ticket.workspaceId, userId);
+    await this.tickets.remove(ticketId);
+  }
+
   private async requireTicket(ticketId: string): Promise<TicketRecord> {
     const ticket = await this.tickets.findById(ticketId);
     if (!ticket) throw new NotFoundException('Ticket not found.');
@@ -72,7 +80,10 @@ export class TicketsService {
 
   private async requireMember(workspaceId: string, userId: string): Promise<{ userId: string; role: 'ADMIN' | 'EMPLOYEE' }> {
     const member = await this.membership.findMember(workspaceId, userId);
-    if (!member) throw new ForbiddenException('Workspace membership is required.');
+    if (!member) {
+      if (!await this.membership.workspaceExists(workspaceId)) throw new NotFoundException('Workspace not found.');
+      throw new ForbiddenException('Workspace membership is required.');
+    }
     return member;
   }
 

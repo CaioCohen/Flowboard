@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationType } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 import { QueryResultRow } from 'pg';
 import { DatabaseService } from '../database/database.service';
 
@@ -63,10 +64,10 @@ export class NotificationRepository {
 
   async create(data: CreateNotificationData, executor: DatabaseExecutor = this.database): Promise<NotificationRecord> {
     const result = await executor.query<NotificationRecord>(`
-      INSERT INTO "Notification" ("userId", "workspaceId", "actorUserId", type, title, message)
-      VALUES ($1, $2, $3, $4::"NotificationType", $5, $6)
+      INSERT INTO "Notification" (id, "userId", "workspaceId", "actorUserId", type, title, message)
+      VALUES ($1, $2, $3, $4, $5::"NotificationType", $6, $7)
       RETURNING id, "userId", "workspaceId", "actorUserId", type, title, message, "isRead", "createdAt"
-    `, [data.userId, data.workspaceId ?? null, data.actorUserId ?? null, data.type, data.title, data.message]);
+    `, [randomUUID(), data.userId, data.workspaceId ?? null, data.actorUserId ?? null, data.type, data.title, data.message]);
     return result.rows[0];
   }
 }

@@ -13,4 +13,9 @@ export class WorkspaceMembershipRepository implements WorkspaceMembershipPort {
     );
     return result.rows[0] ?? null;
   }
+
+  async workspaceExists(workspaceId: string): Promise<boolean> {
+    const result = await this.database.query<{ exists: boolean }>('SELECT EXISTS(SELECT 1 FROM "Workspace" WHERE id = $1) AS exists', [workspaceId]);
+    return result.rows[0]?.exists ?? false;
+  }
 }

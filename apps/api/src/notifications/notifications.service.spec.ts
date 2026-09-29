@@ -1,4 +1,5 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { NotificationRepository } from './notification.repository';
 import { NotificationsService } from './notifications.service';
 
 describe('NotificationsService', () => {
@@ -68,5 +69,22 @@ describe('NotificationsService', () => {
     }, transaction);
 
     expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({ userId: 'recipient-id' }), transaction);
+  });
+});
+
+describe('NotificationRepository', () => {
+  it('supplies a UUID when persisting a membership notification through raw SQL', async () => {
+    const database = { query: jest.fn().mockResolvedValue({ rows: [] }) };
+    const repository = new NotificationRepository(database as never);
+    const transaction = { query: jest.fn().mockResolvedValue({ rows: [{ id: 'notification-1' }] }) };
+
+    await repository.create({
+      userId: 'recipient-id', workspaceId: 'workspace-id', actorUserId: 'actor-id',
+      type: 'WORKSPACE_ADDED', title: 'You were added to a workspace', message: 'You were added to Engineering.',
+    }, transaction);
+
+    const [sql, values] = transaction.query.mock.calls[0];
+    expect(sql).toContain('INSERT INTO "Notification" (id, "userId"');
+    expect(values[0]).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
   });
 });

@@ -72,3 +72,5 @@ structured logging, request IDs, health checks, and safe local diagnosis.
 Docker is used only for local PostgreSQL. Frontend and API containerization,
 remote CI/CD, public deployment controls (TLS, rate limiting, backup policy),
 and a remote secret manager remain intentionally undecided by the specifications.
+
+connect to the local db with psql -h localhost -p 5432 -U postgres

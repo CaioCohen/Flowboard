@@ -39,4 +39,8 @@ export class TicketRepository implements TicketRepositoryPort {
     const result = await this.database.query<TicketRecord>(`UPDATE "Ticket" SET ${assignments.join(', ')} WHERE id = $1 RETURNING ${SELECT_TICKET}`, [id, ...values]);
     return result.rows[0];
   }
+
+  async remove(id: string): Promise<void> {
+    await this.database.query('DELETE FROM "Ticket" WHERE id = $1', [id]);
+  }
 }

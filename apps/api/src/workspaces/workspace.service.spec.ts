@@ -17,12 +17,49 @@ describe('WorkspaceService', () => {
     const repository = {
       findMembership: jest.fn().mockResolvedValue({ role: WorkspaceRole.ADMIN }),
       findMember: jest.fn().mockResolvedValue({ userId: '22222222-2222-4222-8222-222222222222', role: WorkspaceRole.ADMIN }),
+      lockMembers: jest.fn().mockResolvedValue(undefined),
       countAdmins: jest.fn().mockResolvedValue(1),
+      findById: jest.fn().mockResolvedValue({ id: 'workspace-1', name: 'Engineering' }),
     };
-    const service = new WorkspaceService(repository as never, {} as never, {} as never);
+    const database = { transaction: jest.fn((operation) => operation({ query: jest.fn() })) };
+    const service = new WorkspaceService(repository as never, database as never, {} as never);
 
     await expect(service.changeMemberRole(actor, 'workspace-1', '22222222-2222-4222-8222-222222222222', { role: WorkspaceRole.EMPLOYEE }))
       .rejects.toEqual(new ConflictException('A workspace must have at least one administrator.'));
+  });
+
+  it('rechecks the administrator invariant inside the membership transaction', async () => {
+    const transaction = { query: jest.fn() };
+    const countAdmins = jest.fn().mockResolvedValue(2);
+    const repository = {
+      findMembership: jest.fn().mockResolvedValue({ role: WorkspaceRole.ADMIN }),
+      findMember: jest.fn().mockResolvedValue({ userId: '22222222-2222-4222-8222-222222222222', role: WorkspaceRole.ADMIN }),
+      lockMembers: jest.fn().mockImplementation(async () => countAdmins.mockResolvedValue(1)),
+      countAdmins,
+      updateMemberRole: jest.fn(),
+      findById: jest.fn().mockResolvedValue({ id: 'workspace-1', name: 'Engineering' }),
+    };
+    const database = { transaction: jest.fn((operation) => operation(transaction)) };
+    const service = new WorkspaceService(repository as never, database as never, { create: jest.fn() } as never);
+
+    await expect(service.changeMemberRole(actor, 'workspace-1', '22222222-2222-4222-8222-222222222222', { role: WorkspaceRole.EMPLOYEE }))
+      .rejects.toEqual(new ConflictException('A workspace must have at least one administrator.'));
+  });
+
+  it('maps a concurrent duplicate membership insertion to the documented conflict', async () => {
+    const transaction = { query: jest.fn() };
+    const repository = {
+      findMembership: jest.fn().mockResolvedValue({ role: WorkspaceRole.ADMIN }),
+      findUserByEmail: jest.fn().mockResolvedValue({ id: '22222222-2222-4222-8222-222222222222' }),
+      findMember: jest.fn().mockResolvedValue(null),
+      findById: jest.fn().mockResolvedValue({ id: 'workspace-1', name: 'Engineering' }),
+      addMember: jest.fn().mockRejectedValue({ code: '23505' }),
+    };
+    const database = { transaction: jest.fn((operation) => operation(transaction)) };
+    const service = new WorkspaceService(repository as never, database as never, { create: jest.fn() } as never);
+
+    await expect(service.addMember(actor, 'workspace-1', { email: 'member@example.test', role: WorkspaceRole.EMPLOYEE }))
+      .rejects.toEqual(new ConflictException('User is already a workspace member.'));
   });
 
   it('refuses administrative changes by an EMPLOYEE', async () => {
