@@ -60,9 +60,17 @@ and has not yet been introduced, so no demo credentials are provided.
 - `pnpm verify` — runs lint, type checks, unit tests, and Prisma validation.
 
 Integration tests must use `TEST_DATABASE_URL`, never the development database.
-Playwright E2E infrastructure is deferred until product flows exist; a future
-local test command must start the API, frontend, and `postgres-test` without
-using an external environment.
+
+## Browser E2E tests
+
+Install Chromium once with `pnpm --filter @flowboard/web exec playwright install chromium`, then run `pnpm --filter @flowboard/web test:e2e`.
+
+The Playwright suite starts the production Vite preview automatically and uses
+a fresh in-memory HTTP API for each test. This keeps browser coverage
+deterministic and independent of Docker, test credentials, shared database
+state, system time, and external services.
+
+interactive playwright UI: pnpm.cmd --filter @flowboard/web test:e2e:ui
 
 ## Operations and security
 
