@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { AccountApiError, getNotifications, markNotificationRead, type INotification } from "../../services/account-api";
-import { formatNotificationDate } from "../../utils/account-presentation";
+import { applyReadNotification, formatNotificationDate, hasUnreadNotifications } from "../../utils/account-presentation";
 
 import "./notifications-page.css";
 
@@ -9,13 +9,14 @@ interface INotificationsPageProps {
   token?: string | null;
   onUnauthorized?: () => void;
   onNotificationRead?: (notification: INotification) => void;
+  onUnreadStatusChange?: (hasUnread: boolean) => void;
 }
 
 function readSessionToken(): string | null {
   return typeof window === "undefined" ? null : window.sessionStorage.getItem("token");
 }
 
-export function NotificationsPage({ token = readSessionToken(), onUnauthorized, onNotificationRead }: INotificationsPageProps) {
+export function NotificationsPage({ token = readSessionToken(), onUnauthorized, onNotificationRead, onUnreadStatusChange }: INotificationsPageProps) {
   const [notifications, setNotifications] = useState<INotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -32,7 +33,7 @@ export function NotificationsPage({ token = readSessionToken(), onUnauthorized, 
     setIsLoading(true);
     setHasError(false);
     getNotifications(token)
-      .then((items) => { if (isCurrent) setNotifications(items); })
+      .then((items) => { if (isCurrent) { setNotifications(items); onUnreadStatusChange?.(hasUnreadNotifications(items)); } })
       .catch((error: unknown) => {
         if (!isCurrent) return;
         if (error instanceof AccountApiError && error.status === 401) onUnauthorized?.();
@@ -48,7 +49,9 @@ export function NotificationsPage({ token = readSessionToken(), onUnauthorized, 
     setMutationErrorId(null);
     try {
       const updated = await markNotificationRead(token, notification.id);
-      setNotifications((items) => items.map((item) => item.id === updated.id ? { ...item, ...updated, isRead: true } : item));
+      const nextNotifications = applyReadNotification(notifications, { id: updated.id, isRead: true });
+      setNotifications(nextNotifications);
+      onUnreadStatusChange?.(hasUnreadNotifications(nextNotifications));
       onNotificationRead?.({ ...notification, ...updated, isRead: true });
     } catch (error: unknown) {
       if (error instanceof AccountApiError && error.status === 401) onUnauthorized?.();

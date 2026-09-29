@@ -16,4 +16,10 @@ describe("workspaceErrorMessage", () => {
       "We couldn't save the workspace. Please try again.",
     );
   });
+
+  it("shows an unknown invitation email directly instead of an access error", () => {
+    const error = Object.assign(new Error("User email not found."), { status: 404 });
+
+    expect(workspaceErrorMessage(error, "add this member")).toBe("User email not found.");
+  });
 });

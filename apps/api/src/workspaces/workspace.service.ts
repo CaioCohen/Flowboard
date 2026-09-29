@@ -33,7 +33,7 @@ export class WorkspaceService {
   async addMember(actor: IAuthenticatedUser, workspaceId: string, dto: AddMemberDto): Promise<IWorkspaceMember> {
     await this.requireAdmin(actor.id, workspaceId);
     const user = await this.workspaces.findUserByEmail(dto.email);
-    if (!user) throw new NotFoundException('User not found.');
+    if (!user) throw new NotFoundException('User email not found.');
     if (await this.workspaces.findMember(workspaceId, user.id)) throw new ConflictException('User is already a workspace member.');
     const workspace = await this.workspaceOrThrow(workspaceId);
     try {

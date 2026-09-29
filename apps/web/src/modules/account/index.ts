@@ -7,5 +7,5 @@ export { AccountApiError, getCurrentUser, getNotifications, markNotificationRead
 export type { ICurrentUser, INotification } from "./services/account-api";
 
 // Presentation utilities
-export { getInitials } from "./utils/account-presentation";
+export { getInitials, hasUnreadNotifications } from "./utils/account-presentation";
 export { getProfileDisplayName } from "./utils/profile-presentation";

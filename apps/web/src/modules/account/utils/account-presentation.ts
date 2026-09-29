@@ -21,3 +21,14 @@ export function formatNotificationDate(value: string): string {
 
   return Number.isNaN(date.getTime()) ? "Date unavailable" : DATE_FORMATTER.format(date);
 }
+
+export function hasUnreadNotifications(notifications: ReadonlyArray<{ isRead: boolean }>): boolean {
+  return notifications.some((notification) => !notification.isRead);
+}
+
+export function applyReadNotification<T extends { id: string; isRead: boolean }>(
+  notifications: ReadonlyArray<T>,
+  updated: { id: NoInfer<T["id"]>; isRead: boolean },
+): T[] {
+  return notifications.map((notification) => notification.id === updated.id ? { ...notification, ...updated } as T : notification);
+}

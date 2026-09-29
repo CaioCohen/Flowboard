@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { WorkspaceService } from './workspace.service';
 import { WorkspaceRole } from './workspace.repository';
 
@@ -60,6 +60,17 @@ describe('WorkspaceService', () => {
 
     await expect(service.addMember(actor, 'workspace-1', { email: 'member@example.test', role: WorkspaceRole.EMPLOYEE }))
       .rejects.toEqual(new ConflictException('User is already a workspace member.'));
+  });
+
+  it('identifies an unknown invitation email without masking it as workspace access failure', async () => {
+    const repository = {
+      findMembership: jest.fn().mockResolvedValue({ role: WorkspaceRole.ADMIN }),
+      findUserByEmail: jest.fn().mockResolvedValue(null),
+    };
+    const service = new WorkspaceService(repository as never, {} as never, {} as never);
+
+    await expect(service.addMember(actor, 'workspace-1', { email: 'missing@example.test', role: WorkspaceRole.EMPLOYEE }))
+      .rejects.toEqual(new NotFoundException('User email not found.'));
   });
 
   it('refuses administrative changes by an EMPLOYEE', async () => {

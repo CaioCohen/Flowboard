@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { NotificationsPage, ProfilePage, getInitials, getProfileDisplayName } from "@/modules/account";
+import { NotificationsPage, ProfilePage, getInitials, getProfileDisplayName, hasUnreadNotifications } from "@/modules/account";
+import { getNotifications } from "@/modules/account/services/account-api";
 import { LoginPage, RegisterPage, clearSession, getAuthenticatedUser, getSessionToken, subscribeToSession } from "@/modules/auth";
 import { WorkspaceDashboardPage, WorkspacesPage } from "@/modules/workspace";
 
@@ -16,17 +17,17 @@ function Redirect({ to }: { to: string }) {
   return null;
 }
 
-function AppLayout({ children, onLogout }: { children: React.ReactNode; onLogout: () => void }) {
+function AppLayout({ children, hasUnread, onLogout }: { children: React.ReactNode; hasUnread: boolean; onLogout: () => void }) {
   const user = getAuthenticatedUser();
   const displayName = getProfileDisplayName(user);
   const initials = getInitials(user?.firstName, user?.lastName, user?.email);
-
   return <div className="app-shell">
     <nav className="app-navbar" aria-label="Main navigation">
       <a className="app-navbar__brand" href="/workspaces" onClick={(event) => { event.preventDefault(); navigate("/workspaces"); }}>Flowboard</a>
       <div className="app-navbar__actions">
         <a className="app-navbar__icon-button" href="/notifications" aria-label="Notifications" title="Notifications" onClick={(event) => { event.preventDefault(); navigate("/notifications"); }}>
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></svg>
+          {hasUnread && <span className="app-navbar__notification-indicator" aria-label="Unread notifications" />}
         </a>
         <details className="app-profile-menu">
           <summary aria-label="Open account menu"><div className="app-profile-menu__trigger"><span className="app-profile-menu__avatar" aria-hidden="true">{initials}</span><span className="app-profile-menu__name">{displayName}</span><svg className="app-profile-menu__chevron" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m5 7.5 5 5 5-5" /></svg></div></summary>
@@ -41,6 +42,7 @@ function AppLayout({ children, onLogout }: { children: React.ReactNode; onLogout
 export function AppRoutes() {
   const [path, setPath] = useState(() => window.location.pathname);
   const [token, setToken] = useState(() => getSessionToken());
+  const [hasUnread, setHasUnread] = useState(false);
 
   useEffect(() => {
     const onPopState = () => setPath(window.location.pathname);
@@ -48,6 +50,15 @@ export function AppRoutes() {
     window.addEventListener("popstate", onPopState);
     return () => { window.removeEventListener("popstate", onPopState); unsubscribe(); };
   }, []);
+
+  useEffect(() => {
+    if (!token) { setHasUnread(false); return; }
+    let isCurrent = true;
+    const refreshUnread = () => { void getNotifications(token).then((notifications) => { if (isCurrent) setHasUnread(hasUnreadNotifications(notifications)); }).catch(() => { if (isCurrent) setHasUnread(false); }); };
+    refreshUnread();
+    const interval = window.setInterval(refreshUnread, 30_000);
+    return () => { isCurrent = false; window.clearInterval(interval); };
+  }, [token]);
 
   const logout = () => { clearSession(); navigate("/login"); };
   const authenticated = Boolean(token);
@@ -65,10 +76,10 @@ export function AppRoutes() {
   const content = path === "/profile"
     ? <ProfilePage token={token} onUnauthorized={logout} />
     : path === "/notifications"
-      ? <NotificationsPage token={token} onUnauthorized={logout} />
+      ? <NotificationsPage token={token} onUnauthorized={logout} onUnreadStatusChange={setHasUnread} />
       : workspaceMatch
         ? <WorkspaceDashboardPage accessToken={token!} workspaceId={workspaceMatch[1]} onBack={() => navigate("/workspaces")} />
         : <WorkspacesPage accessToken={token!} onOpenWorkspace={(id) => navigate(`/workspace/${id}`)} />;
 
-  return <AppLayout onLogout={logout}>{content}</AppLayout>;
+  return <AppLayout hasUnread={hasUnread} onLogout={logout}>{content}</AppLayout>;
 }
