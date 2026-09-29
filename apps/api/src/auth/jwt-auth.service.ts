@@ -5,11 +5,15 @@ import { RuntimeConfigService } from '../config/runtime-config.service';
 export interface IJwtPayload {
   sub: string;
   email: string;
+  firstName: string;
+  lastName: string;
 }
 
 interface IUserForToken {
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
 }
 
 @Injectable()
@@ -17,7 +21,10 @@ export class JwtAuthService {
   constructor(private readonly jwt: JwtService, private readonly config: RuntimeConfigService) {}
 
   sign(user: IUserForToken): Promise<string> {
-    return this.jwt.signAsync({ sub: user.id, email: user.email }, { secret: this.config.jwtSecret, expiresIn: durationInSeconds(this.config.jwtExpiration) });
+    return this.jwt.signAsync(
+      { sub: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName },
+      { secret: this.config.jwtSecret, expiresIn: durationInSeconds(this.config.jwtExpiration) },
+    );
   }
 
   async verify(token: string): Promise<IJwtPayload> {

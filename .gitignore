@@ -8,3 +8,5 @@ coverage/
 database/generated/
 playwright-report/
 test-results/
+docs/problem-reports/
+docs/adr/

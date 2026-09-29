@@ -14,6 +14,15 @@ describe('AuthService', () => {
     expect(session.token).toEqual(expect.any(String));
   });
 
+  it('stores registration passwords using bcrypt', async () => {
+    const users = { findByEmail: jest.fn().mockResolvedValue(null), create: jest.fn().mockResolvedValue({ id: 'u1', firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.test' }) };
+    const service = new AuthService(users as never, jwtAuth as never);
+
+    await service.register({ firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.test', password: 'Password-9!', passwordConfirmation: 'Password-9!' });
+
+    expect(users.create.mock.calls[0][0].passwordHash).toMatch(/^\$2[aby]\$/);
+  });
+
   it('rejects an email already owned by a user', async () => {
     const service = new AuthService({ findByEmail: jest.fn().mockResolvedValue({ id: 'u1' }) } as never, jwtAuth as never);
 

@@ -1,12 +1,10 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
-import { promisify } from 'node:util';
+import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthService } from './jwt-auth.service';
 import { UserRepository, IUserRecord } from './user.repository';
 
-const scrypt = promisify(scryptCallback);
 const INVALID_CREDENTIALS_MESSAGE = 'Email or password is incorrect.';
 
 export interface IAuthenticatedUser {
@@ -57,18 +55,11 @@ export class AuthService {
   }
 
   private async hashPassword(password: string): Promise<string> {
-    const salt = randomBytes(16).toString('hex');
-    const derived = await scrypt(password, salt, 64) as Buffer;
-    return `scrypt$${salt}$${derived.toString('hex')}`;
+    return bcrypt.hash(password, 12);
   }
 
   private async verifyPassword(password: string, storedHash: string): Promise<boolean> {
-    const [algorithm, salt, hash] = storedHash.split('$');
-    if (algorithm !== 'scrypt' || !salt || !hash) return false;
-    const expected = Buffer.from(hash, 'hex');
-    if (expected.length !== 64) return false;
-    const derived = await scrypt(password, salt, expected.length) as Buffer;
-    return expected.length === derived.length && timingSafeEqual(expected, derived);
+    return bcrypt.compare(password, storedHash).catch(() => false);
   }
 
   private isUniqueViolation(error: unknown): boolean {
