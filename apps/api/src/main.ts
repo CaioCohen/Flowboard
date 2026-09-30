@@ -6,6 +6,7 @@ import { RequestLoggingInterceptor } from './common/request-logging.interceptor'
 import { SanitizedExceptionFilter } from './common/sanitized-exception.filter';
 import { loadEnvironmentFile } from './config/environment-file';
 import { RuntimeConfigService } from './config/runtime-config.service';
+import { MetricsService } from './metrics/metrics.service';
 
 async function bootstrap(): Promise<void> {
   loadEnvironmentFile();
@@ -15,7 +16,7 @@ async function bootstrap(): Promise<void> {
 
   app.enableCors({ origin: config.frontendUrl, credentials: true });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, disableErrorMessages: true }));
-  app.useGlobalInterceptors(new RequestLoggingInterceptor());
+  app.useGlobalInterceptors(new RequestLoggingInterceptor(app.get(MetricsService)));
   app.useGlobalFilters(new SanitizedExceptionFilter());
   await app.listen(config.port);
 }
